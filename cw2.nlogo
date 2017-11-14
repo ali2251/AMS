@@ -214,7 +214,7 @@ end
 
 ;; Update intentions with respect to beliefs about the world
 to update-intentions
-  if exist-beliefs-of-type "fire" and current-intention = "find-target-fire" ;; if there is at least one belief about a fire location
+  if exist-beliefs-of-type "test" and current-intention = "find-target-fire" ;; if there is at least one belief about a fire location
   [
      let fire-location closest-fire-location ;; get the belief that relates to the fire which is closest
      remove-belief fire-location ;; remove the belief because we will now add an intention for it
@@ -241,7 +241,7 @@ end
 
 ;; Returns the belief of the closest fire location
 to-report closest-fire-location
-  let fire-beliefs beliefs-of-type "fire" ;; get all the beliefs relating to fire locations
+  let fire-beliefs beliefs-of-type "test" ;; get all the beliefs relating to fire locations
 
   let closest-belief first fire-beliefs ;; get the first belief in the list
   let closest-location last closest-belief ;; initialise closest location with the location in first belief in the list
@@ -315,19 +315,18 @@ while [not empty? incoming-queue]
    set msg get-message
    set performative get-performative msg
    set content get-content msg
-    print bestContent
+
     ;print "-------------------"
-    print content
-    if content < bestContent [print "**********************" set bestContent content set msgtoReply msg ]
+
+    if content < bestContent [ set bestContent content set msgtoReply msg ]
    ;if performative = "inform" [add-belief get-content msg]
   ]
 
   if bestContent != 10000 [
-    print "---------------======================"
-    print bestContent
-    print "++++++++++"
+
+
     let reply create-reply "inform" msgtoReply
-    set reply add-content fire-location-s reply
+    set reply add-content fire-locations reply
     send reply
 
     ]
@@ -381,6 +380,10 @@ end
 ;;; returns a list that indicates the location of the fire.
 to-report fire-location-s
   report (list "fire" list pxcor pycor)
+end
+
+to-report fire-locations
+  report (list "test" list pxcor pycor)
 end
 
 to-report fire-coords [fire-loc-rec]
