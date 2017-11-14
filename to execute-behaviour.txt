@@ -1,0 +1,21 @@
+to execute-behaviour
+  ;First check if there is any fire and
+  ; if there is then check whether you have the water to put it out,
+  ; if yes then put the fire out otherwise move to the base to get water
+   if detect-fire
+    [ifelse have-water
+      [put-out-fire stop]
+      [move-towards-base stop] ]
+   ; If at the base already then check whether you have water and if not then refill water 
+   if at-base 
+   [ if need-water 
+     [service-unit stop] ]
+   ; If water is needed then move towards the base and once it is at the base the above if statement will refill the water
+   if need-water [move-towards-base stop]
+   ; If any other unit is detected then avoid it, fire will never be avoided because of the first 
+   ;   if statement which detects fire and takes the necessary actions
+   if detect-obstacle [avoid-obstacle stop]
+   ; All other cases have been dealt with, hence just move randomly
+   if true [move-randomly stop]
+   
+end
