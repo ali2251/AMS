@@ -155,6 +155,7 @@ to units-behaviour
   if reactive-behaviour-unit [stop] ;; Just to make sure that only one action gets fired.
   collect-msg-update-intentions ;; Read through all the messages that were received, then update the intentions
   execute-intentions  ;; Try to realise intentions
+  move-randomly
 end
 
 ;;; Simple reactive behaviour in order to put out any fires in area.
@@ -342,6 +343,7 @@ end
 ;; Currently the scouter has no need to update intentions
 to update-intentions-sc
   ;; update intentions
+
 end
 
 ;; you can ignore this empty procedure.
