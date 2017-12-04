@@ -156,6 +156,7 @@ to units-behaviour
   collect-msg-update-intentions ;; Read through all the messages that were received, then update the intentions
   execute-intentions  ;; Try to realise intentions
   move-randomly
+
 end
 
 ;;; Simple reactive behaviour in order to put out any fires in area.
@@ -229,7 +230,6 @@ to update-intentions
      ;; Note that the intentions are pushed onto the stack in reverse order so that they are popped off of the stack in the correct order
      add-intention "put-out-fire" "fire-out" ;;2. extinguish the fire, achieved when the fire is out
      add-intention (word "move-towards-dest " coords) (word "at-dest " coords) ;; 1. move towards the location of the fire, achieved when we arrive
-
      add-intention "do-nothing" timeout_expired 5 ;; wait 5ms before starting (this is to help the visualisation only)
   ]
 end
@@ -667,7 +667,7 @@ initial-water
 initial-water
 0
 50
-25
+4
 1
 1
 NIL
@@ -765,7 +765,7 @@ CHOOSER
 tree-num
 tree-num
 100 200 300 400 500
-1
+4
 
 CHOOSER
 17
@@ -775,7 +775,7 @@ CHOOSER
 fire-units-num
 fire-units-num
 1 5 10 20 30 40 50
-2
+6
 
 CHOOSER
 17
@@ -785,7 +785,7 @@ CHOOSER
 number-of-fires
 number-of-fires
 1 3 5 10 15 20 30 40
-5
+7
 
 MONITOR
 164
@@ -806,7 +806,7 @@ CHOOSER
 scouter-num
 scouter-num
 1 5 10 15 20 25 30
-1
+6
 
 SWITCH
 17
