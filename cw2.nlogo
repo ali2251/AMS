@@ -155,7 +155,7 @@ to units-behaviour
   if reactive-behaviour-unit [stop] ;; Just to make sure that only one action gets fired.
   collect-msg-update-intentions ;; Read through all the messages that were received, then update the intentions
   execute-intentions  ;; Try to realise intentions
-  move-randomly
+  move-randomly ;; if all intentions are execeuted then move randomly [1]
 
 end
 
@@ -172,20 +172,19 @@ end
 
 ;; Collect messages looks at all the messages, and may change the agent's beliefs about the world
 ;; The beliefs may have changed and so we should update intentions
-to collect-msg-update-intentions
-let msg 0
-let performative 0
-
-
+to collect-msg-update-intentions ;[2] modified to exchange messages
+let msg 0            ;; initialise the message
+let performative 0   ;; initialise the performative
 
 while [not empty? incoming-queue]
-  [
-   set msg get-message
-   set performative get-performative msg
+  [ ;; iterate over the message queue
+   set msg get-message  ; get the message from the queue and set to to the variable message
+   set performative get-performative msg   ; set the performative to the performative of the message, a local variable
 
-   if performative = "inform" [add-belief get-content msg]
+   if performative = "inform" [add-belief get-content msg] ;; if the performative is inform then add it to the beliefs
 
-
+   ;; the inform message added in beliefs has the belief type fire, this means that the agent believes there is a fire at a certian location
+   ;; and it will calculate its distance from the fire and send it back to the souter
    if exist-beliefs-of-type "fire" and current-intention = "find-target-fire" [
    let fire-beliefs beliefs-of-type "fire" ;; get all the beliefs relating to fire locations
    let closest-belief first fire-beliefs ;; get the first belief in the list
@@ -193,30 +192,30 @@ while [not empty? incoming-queue]
    let closest-x first closest-location ;; x coordinate of location
    let closest-y last closest-location ;; y coordinate of location
 
-   let closest-distance (abs (xcor - closest-x)) + (abs (ycor - closest-y)) ;;
+   let closest-distance (abs (xcor - closest-x)) + (abs (ycor - closest-y)) ;; calculate the distance between the fire and itself
 
-   ;;
+   ;;create a reply to the original message and respond with the distance to the scouter/fire
+   let reply create-reply performative msg       ;; create the message with the performative as a reply, this means receiver field will be filled in automatically
+   set reply add-content closest-distance reply  ;; add the content of the message to be the distance calculated above
+   send reply ;; send the reply
 
-   let reply create-reply performative msg
-   set reply add-content closest-distance reply
-   send reply
-
-   ;;let msgr create-message "inform"
-   ;;set msgr add msgr "content" (list "fire" list xcor ycor)
 
    ]
 
 
    ]
 
- update-intentions
+ update-intentions ;; update the intentions
 
 end
 
 
 ;; Update intentions with respect to beliefs about the world
+;; [3] Note here that belief type we are looking at is fire-locations-to-put-out and not belief of fire, the idea is simple,
+;; an agent can belive there is a fire at x,y but the important factor is only that the agent has been instructed to put out the
+;; fire which is done with the belief fire-locations-to-put-out
 to update-intentions
-  if exist-beliefs-of-type "test" and current-intention = "find-target-fire" ;; if there is at least one belief about a fire location
+  if exist-beliefs-of-type "fire-locations-to-put-out" and current-intention = "find-target-fire" ;; if there is at least one belief about a fire location
   [
      let fire-location closest-fire-location ;; get the belief that relates to the fire which is closest
      remove-belief fire-location ;; remove the belief because we will now add an intention for it
@@ -241,8 +240,10 @@ end
 
 
 ;; Returns the belief of the closest fire location
+;; [4] This is very important as it extracts the beliefs and had to be altered to only get the beliefs about fire-locations-to-put-out
+;;  to only elimiate the fires commanded by the air units
 to-report closest-fire-location
-  let fire-beliefs beliefs-of-type "test" ;; get all the beliefs relating to fire locations
+  let fire-beliefs beliefs-of-type "fire-locations-to-put-out" ;; get all the beliefs relating to fire locations
 
   let closest-belief first fire-beliefs ;; get the first belief in the list
   let closest-location last closest-belief ;; initialise closest location with the location in first belief in the list
@@ -298,11 +299,11 @@ to scouter-behaviour
   execute-intentions
 end
 
-;; Currently the scouter does not respond to any messages
-;; and therefore does not have to update intentions based on the messages
+;;
+;; [5] The scouter behaviour has been modified to respond to messages using the reply function from FIPA library
 to collect-msg-update-intentions-sc
   ;; collect messages
-
+;; initialisation of variables
 let msg 0
 let performative 0
 let bestContent 10000
@@ -311,31 +312,28 @@ let msgtoReply 0
 
 while [not empty? incoming-queue]
   [
+    ;; the responses arrived back are the distances of the ground units to the fire/scouters
+
+   set msg get-message ;; get the message and assign it to the local variable
+   set performative get-performative msg ;;get the performative and assign it to the local variable
+   set content get-content msg ;; get the content of the message and assign it to the local variable
 
 
-   set msg get-message
-   set performative get-performative msg
-   set content get-content msg
-
-    ;print "-------------------"
-
+    ;; check if the content is better than all the content seen before and if it is then set it as the new best content and
+    ;; record the message so it can be replied later on.
     if content < bestContent [ set bestContent content set msgtoReply msg ]
-   ;if performative = "inform" [add-belief get-content msg]
+
   ]
 
+  ;; At this point the closest distance must have been selected by the loop and the scouter is ready to send out a reply
+  ;; Check that indeed we have a message to reply to
   if bestContent != 10000 [
 
-
-    let reply create-reply "inform" msgtoReply
-    set reply add-content fire-locations reply
-    send reply
+    let reply create-reply performative msgtoReply ;; create the reply message to the ground unit which is the closest
+    set reply add-content fire-locations reply     ;; [6] note here that fire-locations method is called and not fire-location-s and added to the message
+    send reply ;; send out the reply
 
     ]
-
-  ; let ms create-message "test1"
-   ;let reply create-reply "inform" ms
-   ;set reply add-content fire-location-s reply
-   ;send reply
 
   update-intentions-sc
 end
@@ -384,8 +382,12 @@ to-report fire-location-s
   report (list "fire" list pxcor pycor)
 end
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; [7] simple data structure for fires
+;;; ("fire-locations-to-put-out" (x y))
+;;; returns a list that indicates the location of the fire.
 to-report fire-locations
-  report (list "test" list pxcor pycor)
+  report (list "fire-locations-to-put-out" list pxcor pycor)
 end
 
 to-report fire-coords [fire-loc-rec]
@@ -667,7 +669,7 @@ initial-water
 initial-water
 0
 50
-4
+25
 1
 1
 NIL
