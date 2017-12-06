@@ -202,7 +202,6 @@ while [not empty? incoming-queue]
 
    ]
 
-
    ]
 
  update-intentions ;; update the intentions
@@ -777,7 +776,7 @@ CHOOSER
 fire-units-num
 fire-units-num
 1 5 10 20 30 40 50
-6
+5
 
 CHOOSER
 17
@@ -808,7 +807,7 @@ CHOOSER
 scouter-num
 scouter-num
 1 5 10 15 20 25 30
-6
+5
 
 SWITCH
 17
